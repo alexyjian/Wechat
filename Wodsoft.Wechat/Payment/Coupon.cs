@@ -7,23 +7,23 @@ using System.Threading.Tasks;
 namespace Wodsoft.Wechat.Payment
 {
     /// <summary>
-    /// 内置浏览器交易。
+    /// 微信优惠券。
     /// </summary>
-    public class JsPayment : PaymentBase, IJsPayment
+    public class Coupon
     {
         /// <summary>
-        /// 获取或设置随机码。
+        /// 获取或设置优惠券金额。
         /// </summary>
-        public string Nonce { get; set; }
+        public int Fee { get; set; }
 
         /// <summary>
-        /// 获取或设置时间戳。
+        /// 获取或设置优惠券批次。
         /// </summary>
-        public int TimeStamp { get; set; }
-
+        public string Batch { get; set; }
+        
         /// <summary>
-        /// 获取或设置签名。
+        /// 获取或设置优惠券Id。
         /// </summary>
-        public string Signature { get; set; }
+        public string Id { get; set; }
     }
 }

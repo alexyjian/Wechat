@@ -13,8 +13,19 @@ using Wodsoft.Wechat.MPublic;
 
 namespace Wodsoft.Wechat.Payment
 {
+    /// <summary>
+    /// 微信支付服务。
+    /// </summary>
     public class PaymentService : ServiceBase
     {
+        /// <summary>
+        /// 实例化微信支付服务。
+        /// </summary>
+        /// <param name="serviceToken">微信服务令牌。</param>
+        /// <param name="appId">公众号Id。</param>
+        /// <param name="appKey">公众号密钥。</param>
+        /// <param name="shopId">商户号。</param>
+        /// <param name="shopKey">商户密钥。</param>
         public PaymentService(ServiceToken serviceToken, string appId, string appKey, string shopId, string shopKey)
             : base(serviceToken, appId, appKey)
         {
@@ -26,6 +37,15 @@ namespace Wodsoft.Wechat.Payment
             ShopKey = shopKey;
         }
 
+        /// <summary>
+        /// 实例化微信支付服务。
+        /// </summary>
+        /// <param name="serviceToken">微信服务令牌。</param>
+        /// <param name="appId">公众号Id。</param>
+        /// <param name="appKey">公众号密钥。</param>
+        /// <param name="shopId">商户号。</param>
+        /// <param name="shopKey">商户密钥。</param>
+        /// <param name="cert">客户端证书。</param>
         public PaymentService(ServiceToken serviceToken, string appId, string appKey, string shopId, string shopKey, X509Certificate2 cert)
             : this(serviceToken, appId, appKey, shopId, shopKey)
         {
@@ -35,55 +55,87 @@ namespace Wodsoft.Wechat.Payment
             IsCertificateEnabled = true;
         }
 
+        /// <summary>
+        /// 实例化微信支付服务。
+        /// </summary>
+        /// <param name="serviceToken">微信服务令牌。</param>
+        /// <param name="appId">公众号Id。</param>
+        /// <param name="appKey">公众号密钥。</param>
+        /// <param name="shopId">商户号。</param>
+        /// <param name="shopKey">商户密钥。</param>
+        /// <param name="certPath">客户端证书路径。</param>
+        /// <param name="certPassword">客户端证书密码。</param>
         public PaymentService(ServiceToken serviceToken, string appId, string appKey, string shopId, string shopKey, string certPath, string certPassword)
             : this(serviceToken, appId, appKey, shopId, shopKey, new X509Certificate2(certPath, certPassword))
         { }
 
+        /// <summary>
+        /// 获取商户号。
+        /// </summary>
         public string ShopId { get; private set; }
 
+        /// <summary>
+        /// 获取商户密钥。
+        /// </summary>
         public string ShopKey { get; private set; }
 
+        /// <summary>
+        /// 获取客户端证书。
+        /// </summary>
         public X509Certificate2 Certificate { get; private set; }
 
+        /// <summary>
+        /// 获取是否启用客户端证书。
+        /// </summary>
         public bool IsCertificateEnabled { get; private set; }
 
         /// <summary>
-        /// 获取创建支付接口Url。
+        /// 创建支付接口地址。
         /// </summary>
-        protected virtual string CreatePayUrl { get { return "https://api.mch.weixin.qq.com/pay/unifiedorder"; } }
+        public static string CreatePayUrl = "https://api.mch.weixin.qq.com/pay/unifiedorder";
 
         /// <summary>
-        /// 获取查询支付接口Url。
+        /// 查询支付接口地址。
         /// </summary>
-        protected virtual string QueryPayUrl { get { return "https://api.mch.weixin.qq.com/pay/orderquery"; } }
+        public static string QueryPayUrl = "https://api.mch.weixin.qq.com/pay/orderquery";
 
         /// <summary>
-        /// 获取关闭支付接口Url。
+        /// 关闭支付接口地址。
         /// </summary>
-        protected virtual string ClosePayUrl { get { return "https://api.mch.weixin.qq.com/pay/closeorder"; } }
+        public static string ClosePayUrl = "https://api.mch.weixin.qq.com/pay/closeorder";
 
         /// <summary>
-        /// 获取退款支付接口Url。
+        /// 退款支付接口地址。
         /// </summary>
-        protected virtual string RefundPayUrl { get { return "https://api.mch.weixin.qq.com/pay/refund"; } }
-        
+        public static string RefundPayUrl = "https://api.mch.weixin.qq.com/pay/refund";
+
+        /// <summary>
+        /// 退款查询接口地址。
+        /// </summary>
+        public static string RefundQueryUrl = "https://api.mch.weixin.qq.com/pay/refundquery";
+
+        /// <summary>
+        /// 下载对账单接口地址。
+        /// </summary>
+        public static string DownloadBillUrl = "https://api.mch.weixin.qq.com/pay/downloadbill";
+
         /// <summary>
         /// 微信内置JsAPI支付。
         /// </summary>
-        /// <param name="orderInfo">订单信息。</param>
+        /// <param name="order">订单信息。</param>
         /// <param name="openId">用户OpenId。</param>
         /// <param name="notifyUrl">回调通知地址。</param>
         /// <returns></returns>
-        public virtual async Task<IJsPayment> CreatePayment(IOrderInfo orderInfo, IOpenId openId, string notifyUrl)
+        public virtual async Task<IJsPayment> CreatePayment(IPaymentOrder order, IOpenId openId, string notifyUrl)
         {
-            if (orderInfo == null)
+            if (order == null)
                 throw new ArgumentNullException("order");
             if (openId == null)
                 throw new ArgumentNullException("openId");
             if (notifyUrl == null)
                 throw new ArgumentNullException("notifyUrl");
-            ValidateOrderInfo(orderInfo);
-            var payData = OrderInfoToDictionary(orderInfo);
+            ValidateOrderInfo(order);
+            var payData = OrderInfoToDictionary(order);
             payData.Add("trade_type", "JSAPI");
             payData.Add("openid", openId.OpenId);
             payData.Add("appid", AppId);//公众账号ID
@@ -124,20 +176,20 @@ namespace Wodsoft.Wechat.Payment
         /// <summary>
         /// 微信二维码扫码支付。
         /// </summary>
-        /// <param name="orderInfo">订单信息。</param>
+        /// <param name="order">订单信息。</param>
         /// <param name="productId">商品Id。</param>
         /// <param name="notifyUrl">回调通知地址。</param>
         /// <returns></returns>
-        public virtual async Task<IQrPayment> CreatePayment(IOrderInfo orderInfo, string productId, string notifyUrl)
+        public virtual async Task<IQrPayment> CreatePayment(IPaymentOrder order, string productId, string notifyUrl)
         {
-            if (orderInfo == null)
+            if (order == null)
                 throw new ArgumentNullException("order");
             if (productId == null)
                 throw new ArgumentNullException("productId");
             if (productId.Length > 32)
                 throw new ArgumentOutOfRangeException("productId长度不能大于32。");
-            ValidateOrderInfo(orderInfo);
-            var payData = OrderInfoToDictionary(orderInfo);
+            ValidateOrderInfo(order);
+            var payData = OrderInfoToDictionary(order);
             payData.Add("trade_type", "NATIVE");
             payData.Add("product_id", productId);
             payData.Add("appid", AppId);//公众账号ID
@@ -146,7 +198,7 @@ namespace Wodsoft.Wechat.Payment
             payData.Add("notify_url", notifyUrl);
             payData.Add("sign", GetSignature(payData, ShopKey));
 
-            string backData = await HttpHelper.PostHttp(new Uri(CreatePayUrl), Encoding.UTF8.GetBytes(GetXml(payData)));
+            string backData = await HttpHelper.PostHttp(new Uri(CreatePayUrl), Encoding.UTF8.GetBytes(GetXml(payData)), "application/x-www-form-urlencoded", Encoding.UTF8);
             XElement root = XDocument.Parse(backData).Element("xml");
             if (root.Element("return_code").Value == "FAIL")
             {
@@ -267,7 +319,7 @@ namespace Wodsoft.Wechat.Payment
         /// </summary>
         /// <param name="refundInfo">退款信息。</param>
         /// <returns></returns>
-        public virtual async Task<IRefundResult> RefundPayment(IRefundInfo refundInfo)
+        public virtual async Task<IRefundResult> RefundPayment(IRefundOrder refundInfo)
         {
             if (refundInfo == null)
                 throw new ArgumentNullException("refundInfo");
@@ -306,19 +358,205 @@ namespace Wodsoft.Wechat.Payment
             result.RefundId = root.Element("refund_id").Value;
             result.RefundChannel = root.Element("refund_channel").Value;
             result.RefundFee = int.Parse(root.Element("refund_fee").Value);
-            result.TotalFee = int.Parse(root.Element("refund_channel").Value);
-            if (root.Element("fee_type") != null)
-                result.FeeCurrency = root.Element("fee_type").Value;
-            result.Cash = int.Parse(root.Element("cash_fee").Value);
+            result.RefundNo = root.Element("out_refund_no").Value;
+            result.Status = RefundStatus.PROCESSING;
             if (root.Element("cash_refund_fee") != null)
-                result.CashRefund = int.Parse(root.Element("cash_fee").Value);
+                result.RefundCash = int.Parse(root.Element("cash_fee").Value);
             if (root.Element("coupon_refund_fee") != null)
-            {
                 result.Coupon = int.Parse(root.Element("coupon_refund_fee").Value);
-                result.CouponCount = int.Parse(root.Element("coupon_refund_count").Value);
-                result.CouponId = root.Element("coupon_refund_id").Value;
-            }
             return result;
+        }
+
+        /// <summary>
+        /// 查询退款信息。
+        /// </summary>
+        /// <param name="transactionId">微信交易号。</param>
+        /// <returns>返回退款信息。</returns>
+        public virtual async Task<IRefundInfo> GetRefundInfo(ITransactionId transactionId)
+        {
+            if (transactionId == null)
+                throw new ArgumentNullException("transactionId");
+            var payData = new Dictionary<string, string>();
+            payData.Add("appid", AppId);
+            payData.Add("mch_id", ShopId);
+            payData.Add("nonce_str", Guid.NewGuid().ToString().Replace("-", ""));
+            payData.Add("transactionId", transactionId.TransactionId);
+            payData.Add("sign", GetSignature(payData, ShopKey));
+
+            string backData = await HttpHelper.PostHttp(new Uri(QueryPayUrl), Encoding.UTF8.GetBytes(GetXml(payData)), "text/xml", Encoding.UTF8);
+            XElement root = XDocument.Parse(backData).Element("xml");
+            if (root.Element("return_code").Value == "FAIL")
+            {
+                string errMsg = root.Element("return_msg").Value;
+                throw new WechatException(errMsg);
+            }
+            if (root.Element("result_code").Value == "FAIL")
+            {
+                string errMsg = root.Element("err_code").Value;
+                throw new WechatException(errMsg);
+            }
+            IRefundInfo info = GetRefundInfo(root);
+            return info;
+        }
+
+        /// <summary>
+        /// 查询退款信息。
+        /// </summary>
+        /// <param name="tradeNo">商户订单号。</param>
+        /// <returns>返回退款信息。</returns>
+        public virtual async Task<IRefundInfo> GetRefundInfo(ITradeNumber tradeNo)
+        {
+            if (tradeNo == null)
+                throw new ArgumentNullException("tradeNo");
+            var payData = new Dictionary<string, string>();
+            payData.Add("appid", AppId);
+            payData.Add("mch_id", ShopId);
+            payData.Add("nonce_str", Guid.NewGuid().ToString().Replace("-", ""));
+            payData.Add("out_trade_no", tradeNo.TradeNo);
+            payData.Add("sign", GetSignature(payData, ShopKey));
+
+            string backData = await HttpHelper.PostHttp(new Uri(QueryPayUrl), Encoding.UTF8.GetBytes(GetXml(payData)), "text/xml", Encoding.UTF8);
+            XElement root = XDocument.Parse(backData).Element("xml");
+            if (root.Element("return_code").Value == "FAIL")
+            {
+                string errMsg = root.Element("return_msg").Value;
+                throw new WechatException(errMsg);
+            }
+            if (root.Element("result_code").Value == "FAIL")
+            {
+                string errMsg = root.Element("err_code").Value;
+                throw new WechatException(errMsg);
+            }
+            IRefundInfo info = GetRefundInfo(root);
+            return info;
+        }
+
+        /// <summary>
+        /// 查询退款信息。
+        /// </summary>
+        /// <param name="refundNo">商户退款号。</param>
+        /// <returns>返回退款信息。</returns>
+        public virtual async Task<IRefundInfo> GetRefundInfo(IRefundNumber refundNo)
+        {
+            if (refundNo == null)
+                throw new ArgumentNullException("refundNo");
+            var payData = new Dictionary<string, string>();
+            payData.Add("appid", AppId);
+            payData.Add("mch_id", ShopId);
+            payData.Add("nonce_str", Guid.NewGuid().ToString().Replace("-", ""));
+            payData.Add("out_refund_no", refundNo.RefundNo);
+            payData.Add("sign", GetSignature(payData, ShopKey));
+
+            string backData = await HttpHelper.PostHttp(new Uri(QueryPayUrl), Encoding.UTF8.GetBytes(GetXml(payData)), "text/xml", Encoding.UTF8);
+            XElement root = XDocument.Parse(backData).Element("xml");
+            if (root.Element("return_code").Value == "FAIL")
+            {
+                string errMsg = root.Element("return_msg").Value;
+                throw new WechatException(errMsg);
+            }
+            if (root.Element("result_code").Value == "FAIL")
+            {
+                string errMsg = root.Element("err_code").Value;
+                throw new WechatException(errMsg);
+            }
+            IRefundInfo info = GetRefundInfo(root);
+            return info;
+        }
+
+        /// <summary>
+        /// 查询退款信息。
+        /// </summary>
+        /// <param name="refundId">微信退款号。</param>
+        /// <returns>返回退款信息。</returns>
+        public virtual async Task<IRefundInfo> GetRefundInfo(IRefundId refundId)
+        {
+            if (refundId == null)
+                throw new ArgumentNullException("transactionId");
+            var payData = new Dictionary<string, string>();
+            payData.Add("appid", AppId);
+            payData.Add("mch_id", ShopId);
+            payData.Add("nonce_str", Guid.NewGuid().ToString().Replace("-", ""));
+            payData.Add("refund_id", refundId.RefundId);
+            payData.Add("sign", GetSignature(payData, ShopKey));
+
+            string backData = await HttpHelper.PostHttp(new Uri(QueryPayUrl), Encoding.UTF8.GetBytes(GetXml(payData)), "text/xml", Encoding.UTF8);
+            XElement root = XDocument.Parse(backData).Element("xml");
+            if (root.Element("return_code").Value == "FAIL")
+            {
+                string errMsg = root.Element("return_msg").Value;
+                throw new WechatException(errMsg);
+            }
+            if (root.Element("result_code").Value == "FAIL")
+            {
+                string errMsg = root.Element("err_code").Value;
+                throw new WechatException(errMsg);
+            }
+            IRefundInfo info = GetRefundInfo(root);
+            return info;
+        }
+
+        /// <summary>
+        /// 获取退款信息。
+        /// </summary>
+        /// <param name="root">退款XML Linq节点数据。</param>
+        /// <returns>返回退款信息。</returns>
+        protected virtual IRefundInfo GetRefundInfo(XElement root)
+        {
+            var dict = root.Elements().ToDictionary(t => t.Name.LocalName, t => t.Value);
+            if (dict["sign"] != GetSignature(dict, ShopKey))
+                return null;
+
+            RefundInfo info = new RefundInfo();
+            var count = int.Parse(root.Element("refund_count").Value);
+            info.Items = new IRefundResult[count];
+            for (int i = 0; i < count; i++)
+            {
+                RefundResult item = new RefundResult();
+                item.RefundId = root.Element("refund_id_" + i).Value;
+                item.RefundFee = int.Parse(root.Element("refund_fee_" + i).Value);
+                item.Status = (RefundStatus)Enum.Parse(typeof(RefundStatus), root.Element("refund_status_" + i).Value);
+                if (root.Element("refund_channel_" + i) != null)
+                    item.RefundChannel = root.Element("refund_channel_" + i).Value;
+                if (root.Element("coupon_refund_fee_" + i) != null)
+                    item.Coupon = int.Parse(root.Element("coupon_refund_fee_" + i).Value);
+                if (root.Element("refund_recv_accout_" + i) != null)
+                    item.Account = root.Element("refund_recv_accout_" + i).Value;
+                var ncount = int.Parse(root.Element("coupon_refund_count_" + i).Value);
+                item.CouponItems = new Coupon[ncount];
+                for (int n = 0; n < ncount; n++)
+                {
+                    Coupon coupon = new Coupon();
+                    coupon.Id = root.Element("coupon_refund_id_" + i + "_" + n).Value;
+                    coupon.Batch = root.Element("coupon_refund_batch_id_" + i + "_" + n).Value;
+                    coupon.Fee = int.Parse(root.Element("coupon_refund_fee_" + i + "_" + n).Value);
+                }
+            }
+            return info;
+        }
+
+        /// <summary>
+        /// 下载对账单。
+        /// </summary>
+        /// <param name="date">对账日期。</param>
+        /// <returns>返回对账单文本。</returns>
+        public virtual async Task<string> DownloadBill(DateTime date)
+        {
+            var data = new Dictionary<string, string>();
+            data.Add("appid", AppId);//公众账号ID
+            data.Add("mch_id", ShopId);//商户号
+            data.Add("nonce_str", Guid.NewGuid().ToString().Replace("-", ""));//随机字符串
+            data.Add("bill_date", date.ToString("yyyyMMdd"));
+            data.Add("bill_type", "SUCCESS");
+            data.Add("sign", GetSignature(data, ShopKey));
+
+            string backData = await HttpHelper.PostHttp(new Uri(DownloadBillUrl), Encoding.UTF8.GetBytes(GetXml(data)), "application/x-www-form-urlencoded", Encoding.UTF8);
+            if (backData.Contains("return_code"))
+            {
+                XElement root = XDocument.Parse(backData).Element("xml");
+                string errMsg = root.Element("return_msg").Value;
+                throw new WechatException(errMsg);
+            }
+            return backData;
         }
 
         /// <summary>
@@ -345,6 +583,9 @@ namespace Wodsoft.Wechat.Payment
         }
 
         private string _NotifySuccess;
+        /// <summary>
+        /// 获取回调成功返回信息。
+        /// </summary>
         public virtual string NofitySuccess
         {
             get
@@ -367,6 +608,9 @@ namespace Wodsoft.Wechat.Payment
         }
 
         private string _NotifyFail;
+        /// <summary>
+        /// 获取回调失败返回信息。
+        /// </summary>
         public virtual string NotifyFail
         {
             get
@@ -388,6 +632,11 @@ namespace Wodsoft.Wechat.Payment
             }
         }
 
+        /// <summary>
+        /// 获取交易信息。
+        /// </summary>
+        /// <param name="root">XML Linq节点。</param>
+        /// <returns>返回交易信息。</returns>
         protected virtual IPaymentInfo GetPaymentInfo(XElement root)
         {
             var dict = root.Elements().ToDictionary(t => t.Name.LocalName, t => t.Value);
@@ -426,18 +675,16 @@ namespace Wodsoft.Wechat.Payment
             if (root.Element("coupon_fee") != null)
             {
                 info.Coupon = int.Parse(root.Element("coupon_fee").Value);
-                info.CouponCount = int.Parse(root.Element("coupon_count").Value);
-                info.CouponBatch = new string[info.CouponCount];
-                info.CouponId = new string[info.CouponCount];
-                info.CouponEach = new int[info.CouponCount];
-                for (int i = 0; i < info.CouponCount; i++)
+                var count = int.Parse(root.Element("coupon_count").Value);
+                info.CouponItems = new Coupon[count];
+                for (int i = 0; i < count; i++)
                 {
-                    info.CouponBatch[i] = root.Element("coupon_batch_id_" + i).Value;
-                    info.CouponId[i] = root.Element("coupon_id_" + i).Value;
-                    info.CouponEach[i] = int.Parse(root.Element("coupon_fee_" + i).Value);
+                    Coupon item = new Coupon();
+                    item.Batch = root.Element("coupon_batch_id_" + i).Value;
+                    item.Id = root.Element("coupon_id_" + i).Value;
+                    item.Fee = int.Parse(root.Element("coupon_fee_" + i).Value);
+                    info.CouponItems[i] = item;
                 }
-                info.Coupon = int.Parse(root.Element("coupon_fee").Value);
-                info.Coupon = int.Parse(root.Element("coupon_fee").Value);
             }
             if (root.Element("attach") != null)
                 info.Comment = root.Element("attach").Value;
@@ -445,6 +692,11 @@ namespace Wodsoft.Wechat.Payment
 
         }
 
+        /// <summary>
+        /// 转换字典数据为XML数据。
+        /// </summary>
+        /// <param name="directory">字典数据。</param>
+        /// <returns>返回XML文本。</returns>
         protected static string GetXml(IDictionary<string, string> directory)
         {
             XmlDocument doc = new XmlDocument();
@@ -463,7 +715,7 @@ namespace Wodsoft.Wechat.Payment
         /// <summary>
         /// 验证交易信息正确性。
         /// </summary>
-        public virtual void ValidateOrderInfo(IOrderInfo orderInfo)
+        public virtual void ValidateOrderInfo(IPaymentOrder orderInfo)
         {
             if (string.IsNullOrEmpty(orderInfo.Title))
                 throw new Exception("Title不能为空。");
@@ -491,7 +743,7 @@ namespace Wodsoft.Wechat.Payment
                 throw new Exception("Device长度不能大于32。");
         }
 
-        private IDictionary<string, string> OrderInfoToDictionary(IOrderInfo orderInfo)
+        private IDictionary<string, string> OrderInfoToDictionary(IPaymentOrder orderInfo)
         {
             Dictionary<string, string> payData = new Dictionary<string, string>();
             payData.Add("body", orderInfo.Title);

@@ -6,18 +6,14 @@ using System.Threading.Tasks;
 
 namespace Wodsoft.Wechat.Payment
 {
-    public interface IRefundInfo : ITradeNumber, ITransactionId
+    /// <summary>
+    /// 微信退款信息。
+    /// </summary>
+    public interface IRefundInfo
     {
-        string RefundNo { get; }
-
-        string Device { get; }
-
-        int TotalFee { get; }
-
-        int RefundFee { get; }
-
-        string RefundCurrency { get; }
-
-        string Operator { get; }
+        /// <summary>
+        /// 获取退款项。
+        /// </summary>
+        IRefundResult[] Items { get; }
     }
 }

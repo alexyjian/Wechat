@@ -4,16 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Wodsoft.Wechat.MPublic
+namespace Wodsoft.Wechat.Payment
 {
     /// <summary>
-    /// 用户文本消息。
+    /// 微信退款商户订单号。
     /// </summary>
-    public interface IUserTextMessage : IUserMessage
+    public interface IRefundNumber
     {
         /// <summary>
-        /// 获取文本内容。
+        /// 获取商户退款单号。
         /// </summary>
-        string Content { get; }
+        string RefundNo { get; }
     }
 }

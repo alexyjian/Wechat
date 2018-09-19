@@ -6,26 +6,44 @@ using System.Threading.Tasks;
 
 namespace Wodsoft.Wechat.Payment
 {
-    public interface IRefundResult
+    /// <summary>
+    /// 退款结果。
+    /// </summary>
+    public interface IRefundResult : IRefundId, IRefundNumber
     {
-        string RefundId { get; }
-
+        /// <summary>
+        /// 获取退款渠道。
+        /// </summary>
         string RefundChannel { get; }
 
+        /// <summary>
+        /// 获取退款金额。
+        /// </summary>
         int RefundFee { get; }
+        
+        /// <summary>
+        /// 获取现金退款。
+        /// </summary>
+        int RefundCash { get; }
 
-        int TotalFee { get; }
-
-        string FeeCurrency { get; }
-
-        int Cash { get; }
-
-        int CashRefund { get; }
-
+        /// <summary>
+        /// 获取优惠券退款金额。
+        /// </summary>
         int Coupon { get; }
 
-        int CouponCount { get; }
+        /// <summary>
+        /// 获取优惠券退款项。
+        /// </summary>
+        Coupon[] CouponItems { get; }
 
-        string CouponId { get; }
+        /// <summary>
+        /// 获取退款状态。
+        /// </summary>
+        RefundStatus Status { get; }
+
+        /// <summary>
+        /// 获取退款账户。
+        /// </summary>
+        string Account { get; }
     }
 }
